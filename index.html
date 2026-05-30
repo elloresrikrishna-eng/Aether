@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas — Travel Intelligence</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f; --bg2: #111118; --bg3: #18181f;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+    --text: #f0ede8; --muted: #7a7880;
+    --accent: #c9a96e; --accent2: #e8c98a;
+    --success: #4caf82;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  header { padding: 14px 20px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--bg); flex-shrink: 0; }
+  .logo-mark { width: 28px; height: 28px; border: 1px solid var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 14px; color: var(--accent); }
+  .logo-text { font-family: 'Playfair Display', serif; font-size: 16px; color: var(--text); letter-spacing: 0.5px; }
+  .logo-sub { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-left: auto; }
+  .trip-bar { padding: 8px 20px; background: var(--bg2); border-bottom: 0.5px solid var(--border); display: flex; gap: 16px; align-items: center; flex-shrink: 0; min-height: 36px; overflow-x: auto; }
+  .trip-chip { display: flex; align-items: center; gap: 6px; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 20px; padding: 3px 10px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+  .trip-chip .val { color: var(--accent2); font-weight: 500; }
+  .main { display: flex; flex: 1; overflow: hidden; }
+  .chat-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  .msg { display: flex; gap: 10px; animation: fadeUp 0.25s ease; }
+  .msg.user { flex-direction: row-reverse; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; }
+  .avatar.bot { background: #1a1a10; border: 1px solid var(--accent); color: var(--accent); font-family: 'Playfair Display', serif; }
+  .avatar.user { background: var(--bg3); border: 0.5px solid var(--border2); color: var(--muted); font-size: 13px; }
+  .bubble { max-width: calc(100% - 42px); padding: 10px 14px; border-radius: 12px; line-height: 1.6; font-size: 13.5px; }
+  .msg.bot .bubble { background: var(--bg2); border: 0.5px solid var(--border); border-top-left-radius: 4px; }
+  .msg.user .bubble { background: var(--bg3); border: 0.5px solid var(--border2); border-top-right-radius: 4px; }
+  .bubble p { margin-bottom: 6px; }
+  .bubble p:last-child { margin-bottom: 0; }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 10px; }
+  .result-card { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 10px; padding: 12px; cursor: pointer; transition: border-color 0.15s; }
+  .result-card:hover, .result-card.selected { border-color: var(--accent); background: #1c1b22; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .card-name { font-weight: 500; font-size: 13px; line-height: 1.3; }
+  .card-price { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--accent2); white-space: nowrap; margin-left: 8px; }
+  .card-meta { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .card-badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 500; margin-top: 6px; }
+  .badge-deal { background: rgba(76,175,130,0.15); color: #4caf82; border: 0.5px solid rgba(76,175,130,0.3); }
+  .badge-popular { background: rgba(201,169,110,0.12); color: var(--accent2); border: 0.5px solid rgba(201,169,110,0.3); }
+  .badge-cheapest { background: rgba(91,143,212,0.12); color: #7aabde; border: 0.5px solid rgba(91,143,212,0.25); }
+  .badge-flex { background: rgba(224,92,92,0.1); color: #e08080; border: 0.5px solid rgba(224,92,92,0.25); }
+  .date-flex-box { background: var(--bg3); border: 0.5px solid var(--border2); border-left: 2px solid var(--accent); border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
+  .date-flex-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 8px; font-weight: 500; }
+  .date-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .date-opt { background: var(--bg); border: 0.5px solid var(--border2); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .date-opt:hover { border-color: var(--accent); color: var(--accent2); }
+  .date-opt .saving { color: var(--success); font-size: 11px; display: block; }
+  .itinerary-day { background: var(--bg3); border: 0.5px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-top: 8px; }
+  .day-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--accent); margin-bottom: 6px; font-weight: 500; }
+  .day-item { display: flex; gap: 8px; font-size: 12.5px; align-items: flex-start; margin-bottom: 3px; }
+  .day-time { color: var(--muted); min-width: 45px; flex-shrink: 0; }
+  .input-area { padding: 12px 20px 16px; border-top: 0.5px solid var(--border); background: var(--bg); flex-shrink: 0; }
+  .input-row { display: flex; gap: 8px; align-items: flex-end; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 12px; padding: 8px 12px; transition: border-color 0.15s; }
+  .input-row:focus-within { border-color: var(--accent); }
+  #userInput { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13.5px; resize: none; max-height: 100px; min-height: 22px; line-height: 1.5; }
+  #userInput::placeholder { color: var(--muted); }
+  #sendBtn { background: var(--accent); border: none; border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.15s; color: #0a0a0f; font-size: 14px; }
+  #sendBtn:hover { background: var(--accent2); }
+  #sendBtn:disabled { background: var(--bg3); color: var(--muted); cursor: not-allowed; }
+  .quick-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .qchip { background: var(--bg3); border: 0.5px solid var(--border); border-radius: 16px; padding: 4px 12px; font-size: 11.5px; color: var(--muted); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .qchip:hover { border-color: var(--accent); color: var(--accent2); }
+  .typing-dots { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+  .typing-dots span { width: 5px; height: 5px; background: var(--muted); border-radius: 50%; animation: dot 1.2s infinite; }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dot { 0%,80%,100%{opacity:0.3;transform:scale(0.9)} 40%{opacity:1;transform:scale(1.1)} }
+  .section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin: 12px 0 6px; font-weight: 500; }
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 8px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">A</div>
+  <span class="logo-text">Atlas</span>
+  <span class="logo-sub">Travel Intelligence</span>
+</header>
+
+<div class="trip-bar" id="tripBar">
+  <span style="font-size:11px;color:var(--muted);letter-spacing:0.5px;">No trip planned yet</span>
+</div>
+
+<div class="main">
+  <div class="chat-pane">
+    <div class="messages" id="messages"></div>
+    <div class="input-area">
+      <div class="quick-chips" id="quickChips">
+        <div class="qchip" onclick="sendQuick('I want to plan a trip to Tokyo in July for 7 days')">✈ Tokyo in July</div>
+        <div class="qchip" onclick="sendQuick('Plan a weekend in Paris, budget around ₹1.5L total')">🗼 Paris weekend</div>
+        <div class="qchip" onclick="sendQuick('Beach trip to Bali for 5 nights, suggest cheapest dates')">🏖 Bali beaches</div>
+        <div class="qchip" onclick="sendQuick('Europe trip — Rome, Prague, Vienna in one go, 12 days')">🏰 Euro multi-city</div>
+      </div>
+      <div class="input-row">
+        <textarea id="userInput" placeholder="Where do you want to go?" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button id="sendBtn" onclick="sendMessage()">
+          <i class="ti ti-send"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const messages = document.getElementById('messages');
+const input = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const tripBar = document.getElementById('tripBar');
+const quickChips = document.getElementById('quickChips');
+
+let conversationHistory = [];
+let tripState = {};
+let isStreaming = false;
+
+const SYSTEM_PROMPT = `You are Atlas, a sophisticated AI travel concierge. You help users plan complete trips including flights, hotels, and day-by-day itineraries.
+
+CRITICAL: Respond ONLY with valid JSON. No markdown fences, no preamble. The JSON must strictly follow this schema:
+
+{
+  "message": "Your conversational response text here (can include \\n for line breaks)",
+  "tripUpdate": {
+    "destination": "city, country",
+    "dates": "e.g. Jul 12–19",
+    "duration": "7 nights",
+    "travelers": 2,
+    "budget": "₹2L per person"
+  },
+  "flights": [
+    {
+      "airline": "Air India",
+      "route": "BLR → TYO",
+      "departure": "Jul 12, 08:15",
+      "arrival": "Jul 12, 22:45",
+      "duration": "9h 30m",
+      "stops": "1 stop",
+      "price": "₹52,000",
+      "badge": "cheapest"
+    }
+  ],
+  "hotels": [
+    {
+      "name": "Shinjuku Granbell",
+      "location": "Shinjuku, Tokyo",
+      "stars": 4,
+      "perNight": "₹8,200",
+      "totalCost": "₹57,400",
+      "highlights": "Central location, great breakfast",
+      "badge": "popular"
+    }
+  ],
+  "dateFlexibility": {
+    "show": true,
+    "note": "Shifting by a few days can save significantly:",
+    "options": [
+      { "dates": "Jul 10–17", "saving": "Save ₹8,400", "note": "Tue departure" },
+      { "dates": "Jul 14–21", "saving": "Save ₹5,200", "note": "Shoulder season" }
+    ]
+  },
+  "itinerary": [
+    {
+      "day": "Day 1 — Arrival",
+      "items": [
+        { "time": "Evening", "activity": "Check in, explore Shinjuku" },
+        { "time": "Night", "activity": "Dinner at Omoide Yokocho" }
+      ]
+    }
+  ],
+  "quickReplies": ["Show me business class flights", "Find cheaper hotels", "Extend to 10 days"]
+}
+
+RULES:
+- Always include "message" field
+- Only include sections that are relevant (omit empty arrays)
+- For "badge" use only: "cheapest", "popular", "deal", "flex"
+- tripUpdate: only include fields that changed or are newly known
+- quickReplies: always include 2-3 relevant follow-up suggestions
+- Be specific with real airline names, hotel names, realistic prices in INR
+- When user mentions flexibility or asks for cheaper options, always include dateFlexibility
+- Prices should be realistic for trips from Bangalore, India`;
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function sendQuick(text) { input.value = text; sendMessage(); }
+
+function addMessage(role, content) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const avatar = document.createElement('div');
+  avatar.className = `avatar ${role}`;
+  avatar.textContent = role === 'bot' ? 'A' : 'K';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  if (typeof content === 'string') {
+    bubble.innerHTML = content.replace(/\n/g, '<br>');
+  } else {
+    bubble.appendChild(content);
+  }
+  div.appendChild(avatar);
+  div.appendChild(bubble);
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+  return bubble;
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'msg bot'; div.id = 'typingIndicator';
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar bot'; avatar.textContent = 'A';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  div.appendChild(avatar); div.appendChild(bubble);
+  messages.appendChild(div); messages.scrollTop = messages.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typingIndicator');
+  if (t) t.remove();
+}
+
+function renderBotResponse(data) {
+  const container = document.createElement('div');
+  if (data.message) {
+    const p = document.createElement('div');
+    p.style.marginBottom = '10px';
+    p.innerHTML = data.message.replace(/\n/g, '<br>');
+    container.appendChild(p);
+  }
+  if (data.flights && data.flights.length) {
+    const label = document.createElement('div');
+    label.className = 'section-label'; label.textContent = '✈ Flights';
+    container.appendChild(label);
+    const grid = document.createElement('div'); grid.className = 'cards-grid';
+    data.flights.forEach(f => {
+      const card = document.createElement('div'); card.className = 'result-card';
+      card.innerHTML = `<div class="card-header"><div class="card-name">${f.airline}</div><div class="card-price">${f.price}</div></div><div class="card-meta">${f.route}<br>${f.departure} → ${f.arrival}<br>${f.duration} · ${f.stops}</div>${f.badge ? `<div class="card-badge badge-${f.badge}">${f.badge}</div>` : ''}`;
+      card.onclick = () => card.classList.toggle('selected');
+      grid.appendChild(card);
+    });
+    container.appendChild(grid);
+  }
+  if (data.hotels && data.hotels.length) {
+    const label = document.createElement('div');
+    label.className = 'section-label'; label.style.marginTop = '14px'; label.textContent = '🏨 Hotels';
+    container.appendChild(label);
+    const grid = document.createElement('div'); grid.className = 'cards-grid';
+    data.hotels.forEach(h => {
+      const stars = '★'.repeat(h.stars||3) + '☆'.repeat(5-(h.stars||3));
+      const card = document.createElement('div'); card.className = 'result-card';
+      card.innerHTML = `<div class="card-header"><div class="card-name">${h.name}</div><div class="card-price">${h.perNight}<span style="font-size:10px;color:var(--muted)">/night</span></div></div><div class="card-meta"><span style="color:var(--accent);font-size:11px">${stars}</span><br>${h.location}<br>${h.highlights}</div>${h.badge ? `<div class="card-badge badge-${h.badge}">${h.badge}</div>` : ''}<div style="font-size:11px;color:var(--muted);margin-top:4px">Total: ${h.totalCost}</div>`;
+      card.onclick = () => card.classList.toggle('selected');
+      grid.appendChild(card);
+    });
+    container.appendChild(grid);
+  }
+  if (data.dateFlexibility && data.dateFlexibility.show) {
+    const df = data.dateFlexibility;
+    const box = document.createElement('div'); box.className = 'date-flex-box';
+    box.innerHTML = `<div class="date-flex-title">📅 Date Flexibility</div><div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">${df.note||''}</div><div class="date-row">${(df.options||[]).map(o=>`<div class="date-opt"><strong>${o.dates}</strong><span class="saving">${o.saving}</span><span style="font-size:10px;color:var(--muted)">${o.note||''}</span></div>`).join('')}</div>`;
+    container.appendChild(box);
+  }
+  if (data.itinerary && data.itinerary.length) {
+    const label = document.createElement('div');
+    label.className = 'section-label'; label.style.marginTop = '14px'; label.textContent = '🗺 Itinerary';
+    container.appendChild(label);
+    data.itinerary.forEach(day => {
+      const d = document.createElement('div'); d.className = 'itinerary-day';
+      d.innerHTML = `<div class="day-label">${day.day}</div><div class="day-items">${(day.items||[]).map(i=>`<div class="day-item"><span class="day-time">${i.time}</span><span>${i.activity}</span></div>`).join('')}</div>`;
+      container.appendChild(d);
+    });
+  }
+  if (data.quickReplies && data.quickReplies.length) {
+    const hr = document.createElement('hr'); hr.className = 'divider';
+    container.appendChild(hr);
+    const chips = document.createElement('div'); chips.className = 'date-row'; chips.style.flexWrap = 'wrap';
+    data.quickReplies.forEach(qr => {
+      const btn = document.createElement('div'); btn.className = 'date-opt'; btn.textContent = qr;
+      btn.onclick = () => { input.value = qr; sendMessage(); };
+      chips.appendChild(btn);
+    });
+    container.appendChild(chips);
+  }
+  return container;
+}
+
+function updateTripBar(update) {
+  if (!update) return;
+  Object.assign(tripState, update);
+  const fields = [['destination','📍'],['dates','🗓'],['duration','⏱'],['travelers','👤'],['budget','💰']];
+  const chips = fields.filter(([k]) => tripState[k]).map(([k,icon]) => `<div class="trip-chip"><span>${icon}</span><span class="val">${tripState[k]}</span></div>`).join('');
+  tripBar.innerHTML = chips || '<span style="font-size:11px;color:var(--muted);">No trip planned yet</span>';
+}
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text || isStreaming) return;
+  isStreaming = true; sendBtn.disabled = true;
+  quickChips.style.display = 'none';
+  input.value = ''; input.style.height = 'auto';
+  addMessage('user', text);
+  conversationHistory.push({ role: 'user', content: text });
+  showTyping();
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2000, system: SYSTEM_PROMPT, messages: conversationHistory })
+    });
+    const data = await response.json();
+    removeTyping();
+    let rawText = data.content?.[0]?.text || '';
+    let parsed;
+    try { parsed = JSON.parse(rawText.replace(/```json|```/g, '').trim()); }
+    catch(e) { parsed = { message: rawText || 'Sorry, something went wrong. Try again.', quickReplies: ['Try again'] }; }
+    conversationHistory.push({ role: 'assistant', content: rawText });
+    if (parsed.tripUpdate) updateTripBar(parsed.tripUpdate);
+    addMessage('bot', renderBotResponse(parsed));
+  } catch(err) {
+    removeTyping();
+    addMessage('bot', 'Connection error. Please try again.');
+  }
+  isStreaming = false; sendBtn.disabled = false; input.focus();
+}
+
+async function init() {
+  isStreaming = true; sendBtn.disabled = true; showTyping();
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 500, system: SYSTEM_PROMPT, messages: [{ role: 'user', content: 'Greet me as a new user. Be warm and brief, ask where I want to go.' }] })
+    });
+    const data = await response.json();
+    removeTyping();
+    let rawText = data.content?.[0]?.text || '';
+    let parsed;
+    try { parsed = JSON.parse(rawText.replace(/```json|```/g, '').trim()); }
+    catch(e) { parsed = { message: "Welcome to Atlas ✦ I'm your personal travel concierge. Where are you dreaming of going?", quickReplies: ['Tokyo in July', 'Paris weekend', 'Bali beaches'] }; }
+    conversationHistory.push({ role: 'user', content: 'Greet me as a new user. Be warm and brief, ask where I want to go.' });
+    conversationHistory.push({ role: 'assistant', content: rawText });
+    addMessage('bot', renderBotResponse(parsed));
+  } catch(e) {
+    removeTyping();
+    addMessage('bot', renderBotResponse({ message: "Welcome to Atlas ✦ Where are you dreaming of going?", quickReplies: ['Tokyo in July', 'Paris weekend', 'Bali beaches'] }));
+  }
+  isStreaming = false; sendBtn.disabled = false;
+}
+
+init();
+</script>
+</body>
+</html>
